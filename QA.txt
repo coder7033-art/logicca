@@ -12,6 +12,8 @@ PASS — Mobile section picker
 PASS — Conditional service follow-up
 PASS — Local draft persistence after reload
 PASS — Review before submission
+PASS — Invalid respondent details remain on review with a visible error
+PASS — Correction action focuses the exact invalid field
 PASS — CSV download and print / PDF actions
 PASS — Neon server-only API route
 PASS — Live Neon connection and schema initialization

@@ -604,6 +604,19 @@ html[dir="ltr"] .sidebar nav {
   outline: none;
 }
 
+.form-field.field-invalid input {
+  border-color: var(--danger);
+  background: #fffafa;
+  box-shadow: 0 0 0 3px rgba(162, 64, 59, 0.08);
+}
+
+.form-field > .field-error {
+  color: var(--danger);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
 .mobile-section-picker {
   display: none;
 }
@@ -1028,6 +1041,61 @@ html[dir="ltr"] .sidebar nav {
   line-height: 1.8;
 }
 
+.review-validation {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  margin: -8px 0 22px;
+  padding: 15px 16px;
+  border: 1px solid #e2aaa6;
+  border-radius: 8px;
+  background: #fff7f6;
+  color: var(--danger);
+  box-shadow: 0 8px 24px rgba(162, 64, 59, 0.06);
+}
+
+.validation-mark {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f8e5e3;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.review-validation strong {
+  display: block;
+  color: #83342f;
+  font-size: 11px;
+}
+
+.review-validation p {
+  margin: 3px 0 0;
+  color: #9a4b45;
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.review-validation button {
+  min-height: 36px;
+  border: 1px solid #d89994;
+  border-radius: 6px;
+  background: #fff;
+  color: #83342f;
+  padding: 0 12px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.review-validation button:hover {
+  border-color: var(--danger);
+  background: #fffafa;
+}
+
 .review-card {
   overflow: hidden;
   margin-bottom: 16px;
@@ -1106,6 +1174,13 @@ html[dir="ltr"] .sidebar nav {
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.respondent-summary dd.summary-invalid {
+  color: var(--danger);
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-underline-offset: 3px;
 }
 
 .review-sections {
@@ -1494,6 +1569,14 @@ html[dir="ltr"] .sidebar nav {
   .review-actions,
   .success-actions {
     display: grid;
+  }
+
+  .review-validation {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .review-validation button {
+    grid-column: 1 / -1;
   }
 
   .success-view {

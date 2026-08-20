@@ -79,6 +79,10 @@ const ui = {
     download: "تنزيل نسخة CSV",
     print: "حفظ PDF",
     identityError: "أكمل الاسم والبريد الإلكتروني الصحيح قبل الإرسال.",
+    validationTitle: "تعذر إرسال الاستبيان",
+    fixDetails: "تصحيح بيانات المشارك",
+    nameError: "اكتب الاسم كاملًا — حرفان على الأقل.",
+    emailError: "اكتب بريدًا إلكترونيًا صحيحًا، مثل name@company.com.",
     submitError: "تعذر الإرسال الآن. إجاباتك ما زالت محفوظة على جهازك ويمكنك تنزيل نسخة منها.",
     successKicker: "تم الاستلام",
     successTitle: "شكرًا، وصلتنا إجاباتك.",
@@ -128,6 +132,10 @@ const ui = {
     download: "Download CSV copy",
     print: "Save PDF",
     identityError: "Enter a name and valid work email before submitting.",
+    validationTitle: "Questionnaire could not be submitted",
+    fixDetails: "Correct respondent details",
+    nameError: "Enter a full name with at least two characters.",
+    emailError: "Enter a valid email address, such as name@company.com.",
     submitError: "We could not submit right now. Your answers remain saved on this device and can be downloaded.",
     successKicker: "Received",
     successTitle: "Thank you. Your answers are in.",
@@ -273,7 +281,9 @@ export function QuestionnaireApp() {
     const next = { ...draftRef.current.meta, [key]: value };
     draftRef.current = { ...draftRef.current, meta: next };
     setMeta(next);
-    if (identityError) setIdentityError(false);
+    if (identityError && next.name.trim().length >= 2 && isValidEmail(next.email)) {
+      setIdentityError(false);
+    }
     persist();
   }
 
@@ -350,6 +360,18 @@ export function QuestionnaireApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function editRespondentDetails() {
+    const invalidField = meta.name.trim().length < 2 ? "respondent-name" : "respondent-email";
+    setRenderDraft(draftRef.current);
+    setShowIdentity(true);
+    setMode("questions");
+    window.setTimeout(() => {
+      const field = document.getElementById(invalidField);
+      field?.scrollIntoView({ behavior: "smooth", block: "center" });
+      field?.focus();
+    }, 80);
+  }
+
   function downloadCsv() {
     const rows: [string, string][] = [["Field", "Value"]];
     Object.entries(draftRef.current.meta).forEach(([key, value]) => rows.push([`respondent.${key}`, value]));
@@ -371,9 +393,12 @@ export function QuestionnaireApp() {
     const respondent = draftRef.current.meta;
     if (respondent.name.trim().length < 2 || !isValidEmail(respondent.email)) {
       setIdentityError(true);
-      setRenderDraft(draftRef.current);
-      setMode("questions");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.setTimeout(() => {
+        document.getElementById("review-validation-error")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 50);
       return;
     }
 
@@ -406,6 +431,8 @@ export function QuestionnaireApp() {
   const localizedSection = (value: unknown) => localized(value, language);
   const directionNext = language === "ar" ? "previous" : "next";
   const directionPrevious = language === "ar" ? "next" : "previous";
+  const nameIsInvalid = identityError && meta.name.trim().length < 2;
+  const emailIsInvalid = identityError && !isValidEmail(meta.email);
 
   if (!ready) {
     return (
@@ -497,17 +524,19 @@ export function QuestionnaireApp() {
                     {identityError && <div className="inline-error" role="alert">{copy.identityError}</div>}
                   </div>
                   <div className="respondent-grid">
-                    <label className="form-field">
+                    <label className={`form-field ${nameIsInvalid ? "field-invalid" : ""}`}>
                       <span>{copy.name} <em>{copy.required}</em></span>
-                      <input value={meta.name} onChange={(event) => updateMeta("name", event.target.value)} placeholder={copy.namePlaceholder} autoComplete="name" />
+                      <input id="respondent-name" value={meta.name} onChange={(event) => updateMeta("name", event.target.value)} placeholder={copy.namePlaceholder} autoComplete="name" aria-invalid={nameIsInvalid} aria-describedby={nameIsInvalid ? "respondent-name-error" : undefined} />
+                      {nameIsInvalid && <span className="field-error" id="respondent-name-error">{copy.nameError}</span>}
                     </label>
                     <label className="form-field">
                       <span>{copy.role} <small>{copy.optional}</small></span>
                       <input value={meta.role} onChange={(event) => updateMeta("role", event.target.value)} placeholder={copy.rolePlaceholder} autoComplete="organization-title" />
                     </label>
-                    <label className="form-field">
+                    <label className={`form-field ${emailIsInvalid ? "field-invalid" : ""}`}>
                       <span>{copy.email} <em>{copy.required}</em></span>
-                      <input type="email" value={meta.email} onChange={(event) => updateMeta("email", event.target.value)} placeholder={copy.emailPlaceholder} autoComplete="email" dir="ltr" />
+                      <input id="respondent-email" type="email" value={meta.email} onChange={(event) => updateMeta("email", event.target.value)} placeholder={copy.emailPlaceholder} autoComplete="email" dir="ltr" aria-invalid={emailIsInvalid} aria-describedby={emailIsInvalid ? "respondent-email-error" : undefined} />
+                      {emailIsInvalid && <span className="field-error" id="respondent-email-error">{copy.emailError}</span>}
                     </label>
                     <label className="form-field date-field">
                       <span>{copy.date} <small>{copy.optional}</small></span>
@@ -574,15 +603,26 @@ export function QuestionnaireApp() {
               <h1>{copy.reviewTitle}</h1>
               <p className="review-lead">{copy.reviewIntro}</p>
 
+              {identityError && (
+                <div className="review-validation" id="review-validation-error" role="alert" aria-live="assertive">
+                  <span className="validation-mark" aria-hidden="true">!</span>
+                  <div>
+                    <strong>{copy.validationTitle}</strong>
+                    <p>{copy.identityError}</p>
+                  </div>
+                  <button type="button" onClick={editRespondentDetails}>{copy.fixDetails}</button>
+                </div>
+              )}
+
               <div className="review-card">
                 <div className="review-card-title">
                   <h2>{copy.respondent}</h2>
-                  <button type="button" onClick={() => { setRenderDraft(draftRef.current); setMode("questions"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{copy.edit}</button>
+                  <button type="button" onClick={editRespondentDetails}>{copy.edit}</button>
                 </div>
                 <dl className="respondent-summary">
-                  <div><dt>{copy.name}</dt><dd>{meta.name || "—"}</dd></div>
+                  <div><dt>{copy.name}</dt><dd className={nameIsInvalid ? "summary-invalid" : ""}>{meta.name || "—"}</dd></div>
                   <div><dt>{copy.role}</dt><dd>{meta.role || "—"}</dd></div>
-                  <div><dt>{copy.email}</dt><dd dir="ltr">{meta.email || "—"}</dd></div>
+                  <div><dt>{copy.email}</dt><dd className={emailIsInvalid ? "summary-invalid" : ""} dir="ltr">{meta.email || "—"}</dd></div>
                   <div><dt>{copy.date}</dt><dd>{meta.date || "—"}</dd></div>
                 </dl>
               </div>
