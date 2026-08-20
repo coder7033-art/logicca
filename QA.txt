@@ -1,0 +1,22 @@
+LOGICCA Client Questionnaire v5 — QA
+
+PASS — Next.js 16 production build
+PASS — TypeScript type check
+PASS — ESLint
+PASS — Arabic / RTL default experience
+PASS — English / LTR switch
+PASS — Cairo variable font bundled locally
+PASS — 10/10 questionnaire sections preserved
+PASS — Direct navigation to every section
+PASS — Mobile section picker
+PASS — Conditional service follow-up
+PASS — Local draft persistence after reload
+PASS — Review before submission
+PASS — CSV download and print / PDF actions
+PASS — Neon server-only API route
+PASS — Live Neon connection and schema initialization
+PASS — Database verification inserted 0 test rows
+PASS — Missing DATABASE_URL returns a safe 503 response
+PASS — Desktop visual inspection
+PASS — Mobile 375px horizontal overflow: 0px
+PASS — Browser console errors: 0
