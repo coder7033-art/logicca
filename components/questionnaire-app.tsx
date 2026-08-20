@@ -342,12 +342,6 @@ export function QuestionnaireApp() {
 
   function handleQuestionInput(event: FormEvent<HTMLDivElement>) {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement;
-    if (target.dataset.note) setAnswer(`${target.dataset.note}_note`, target.value);
-    if (target.dataset.text) setAnswer(target.dataset.text, target.value);
-  }
-
-  function handleQuestionChange(event: FormEvent<HTMLDivElement>) {
-    const target = event.target as HTMLInputElement | HTMLSelectElement;
     if (target.dataset.check && target instanceof HTMLInputElement) {
       const current = new Set(
         Array.isArray(draftRef.current.answers[target.dataset.check])
@@ -356,9 +350,15 @@ export function QuestionnaireApp() {
       );
       if (target.checked) current.add(target.value);
       else current.delete(target.value);
-      setAnswer(target.dataset.check, [...current]);
+      setAnswer(target.dataset.check, [...current], true);
       return;
     }
+    if (target.dataset.note) setAnswer(`${target.dataset.note}_note`, target.value);
+    if (target.dataset.text) setAnswer(target.dataset.text, target.value);
+  }
+
+  function handleQuestionChange(event: FormEvent<HTMLDivElement>) {
+    const target = event.target as HTMLInputElement | HTMLSelectElement;
     if (target.dataset.text) setAnswer(target.dataset.text, target.value);
   }
 

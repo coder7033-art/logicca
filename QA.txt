@@ -10,6 +10,7 @@ PASS — 10/10 questionnaire sections preserved
 PASS — Direct navigation to every section
 PASS — Mobile section picker
 PASS — Conditional service follow-up
+PASS — Checkbox selections persist after yes / no / unsure actions
 PASS — Local draft persistence after reload
 PASS — Reset draft action is available
 PASS — Reset requires explicit confirmation
