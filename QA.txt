@@ -11,6 +11,9 @@ PASS — Direct navigation to every section
 PASS — Mobile section picker
 PASS — Conditional service follow-up
 PASS — Local draft persistence after reload
+PASS — Reset draft action is available
+PASS — Reset requires explicit confirmation
+PASS — Reset affects only the local draft
 PASS — Review before submission
 PASS — Invalid respondent details remain on review with a visible error
 PASS — Correction action focuses the exact invalid field

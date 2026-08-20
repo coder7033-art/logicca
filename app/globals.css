@@ -120,6 +120,7 @@ textarea:focus-visible {
 .brand-block,
 .topbar-actions,
 .save-indicator,
+.reset-button,
 .language-button {
   display: flex;
   align-items: center;
@@ -187,6 +188,31 @@ textarea:focus-visible {
   width: 16px;
   height: 16px;
   display: block;
+}
+
+.reset-button {
+  min-height: 40px;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid #d6dfe3;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.reset-button:hover {
+  border-color: #d9aaa6;
+  background: #fff8f7;
+  color: var(--danger);
+}
+
+.reset-icon {
+  width: 15px;
+  height: 15px;
+  display: block;
+  flex: 0 0 auto;
 }
 
 .language-button {
@@ -1466,6 +1492,17 @@ html[dir="ltr"] .sidebar nav {
     padding: 0 11px;
   }
 
+  .reset-button {
+    width: 38px;
+    min-height: 38px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .reset-button span {
+    display: none;
+  }
+
   .main-content {
     padding-top: 28px;
   }
@@ -1596,6 +1633,7 @@ html[dir="ltr"] .sidebar nav {
   .review-actions,
   .success-actions,
   .site-footer,
+  .reset-button,
   .language-button,
   .mobile-section-picker {
     display: none !important;

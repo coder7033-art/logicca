@@ -50,6 +50,8 @@ const ui = {
     of: "من",
     answered: "إجابة مسجلة",
     language: "English",
+    reset: "مسح الإجابات",
+    resetConfirm: "هل تريد مسح كل الإجابات وبيانات المشارك والبدء من جديد؟ لا يمكن التراجع عن ذلك.",
     introTitle: "ساعدنا نفهم طريقة عملكم بدقة",
     intro: "أجب حسب الوضع الحالي. يمكنك الانتقال بين الأقسام في أي وقت والعودة لاستكمال الإجابات لاحقًا.",
     personTitle: "بيانات المشارك",
@@ -103,6 +105,8 @@ const ui = {
     of: "of",
     answered: "recorded answers",
     language: "العربية",
+    reset: "Clear answers",
+    resetConfirm: "Clear all answers and respondent details and start again? This cannot be undone.",
     introTitle: "Help us understand how your business works",
     intro: "Answer based on current operations. You can move between sections at any time and return later.",
     personTitle: "Respondent details",
@@ -172,6 +176,15 @@ function CheckIcon() {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" className="check-icon">
       <path d="m4.5 10.2 3.2 3.2 7.8-7.8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ResetIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="reset-icon">
+      <path d="M4.8 6.4A6.2 6.2 0 1 1 4 12.1" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M4.8 3.5v3.2H8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -354,6 +367,45 @@ export function QuestionnaireApp() {
     } catch {}
   }
 
+  function resetQuestionnaire() {
+    if (!window.confirm(copy.resetConfirm)) return;
+
+    const freshDraft: Draft = {
+      meta: { ...emptyDraft.meta, date: new Date().toISOString().slice(0, 10) },
+      answers: {},
+    };
+
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+
+    draftRef.current = freshDraft;
+    setMeta(freshDraft.meta);
+    setRenderDraft(freshDraft);
+    setActiveIndex(0);
+    setVisited(new Set([0]));
+    setMode("questions");
+    setIdentityError(false);
+    setShowIdentity(false);
+    setSubmitError(false);
+    setSubmitting(false);
+    setReference("");
+    setAnsweredCount(nonEmptyCount(freshDraft));
+    setSaveState("saved");
+
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(freshDraft));
+      window.localStorage.setItem(SECTION_KEY, "0");
+      window.localStorage.setItem(LANGUAGE_KEY, language);
+      window.localStorage.setItem(VISITED_KEY, JSON.stringify([0]));
+    } catch {
+      // The in-memory questionnaire is still reset if local storage is unavailable.
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function openReview() {
     setMode("review");
     setSubmitError(false);
@@ -460,6 +512,10 @@ export function QuestionnaireApp() {
               <span className="save-dot"><CheckIcon /></span>
               <span>{saveState === "saved" ? copy.draft : "..."}</span>
             </div>
+            <button type="button" className="reset-button" onClick={resetQuestionnaire} aria-label={copy.reset}>
+              <ResetIcon />
+              <span>{copy.reset}</span>
+            </button>
             <button type="button" className="language-button" onClick={toggleLanguage}>
               <span className="language-mark">Aa</span>
               {copy.language}
