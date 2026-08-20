@@ -26,6 +26,7 @@ type Respondent = {
   date: string;
 };
 type Draft = { meta: Respondent; answers: Answers };
+type SubmissionReceipt = { reference: string; resetToken: string };
 type ViewMode = "questions" | "review" | "success";
 type SaveState = "saved" | "saving";
 
@@ -33,6 +34,7 @@ const STORAGE_KEY = "logicca_questionnaire_v5";
 const SECTION_KEY = "logicca_questionnaire_section_v5";
 const LANGUAGE_KEY = "logicca_questionnaire_language_v5";
 const VISITED_KEY = "logicca_questionnaire_visited_v5";
+const SUBMISSIONS_KEY = "logicca_questionnaire_submissions_v5";
 
 const emptyDraft: Draft = {
   meta: { name: "", role: "", email: "", date: "" },
@@ -51,7 +53,9 @@ const ui = {
     answered: "إجابة مسجلة",
     language: "English",
     reset: "مسح الإجابات",
-    resetConfirm: "هل تريد مسح كل الإجابات وبيانات المشارك والبدء من جديد؟ لا يمكن التراجع عن ذلك.",
+    resetting: "جارٍ المسح...",
+    resetConfirm: "هل تريد مسح كل الإجابات وبيانات المشارك وأي نسخة مرسلة مرتبطة بهذه المسودة من قاعدة البيانات؟ لا يمكن التراجع عن ذلك.",
+    resetError: "تعذر مسح النسخة من قاعدة البيانات الآن. لم يتم مسح إجاباتك من الجهاز، ويمكنك المحاولة مرة أخرى.",
     introTitle: "ساعدنا نفهم طريقة عملكم بدقة",
     intro: "أجب حسب الوضع الحالي. يمكنك الانتقال بين الأقسام في أي وقت والعودة لاستكمال الإجابات لاحقًا.",
     personTitle: "بيانات المشارك",
@@ -106,7 +110,9 @@ const ui = {
     answered: "recorded answers",
     language: "العربية",
     reset: "Clear answers",
-    resetConfirm: "Clear all answers and respondent details and start again? This cannot be undone.",
+    resetting: "Clearing...",
+    resetConfirm: "Clear all answers, respondent details, and any submitted copy linked to this draft from the database? This cannot be undone.",
+    resetError: "The database copy could not be cleared. Your answers remain on this device, so you can try again.",
     introTitle: "Help us understand how your business works",
     intro: "Answer based on current operations. You can move between sections at any time and return later.",
     personTitle: "Respondent details",
@@ -206,9 +212,12 @@ export function QuestionnaireApp() {
   const [showIdentity, setShowIdentity] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState(false);
   const [reference, setReference] = useState("");
   const [ready, setReady] = useState(false);
   const draftRef = useRef<Draft>({ ...emptyDraft, meta: { ...emptyDraft.meta }, answers: {} });
+  const submissionReceiptsRef = useRef<SubmissionReceipt[]>([]);
   const saveTimerRef = useRef<number | null>(null);
   const copy = ui[language];
 
@@ -239,6 +248,17 @@ export function QuestionnaireApp() {
 
       const storedVisited = JSON.parse(window.localStorage.getItem(VISITED_KEY) ?? "[]") as number[];
       setVisited(new Set([0, ...storedVisited.filter((item) => Number.isInteger(item))]));
+
+      const storedSubmissions = JSON.parse(window.localStorage.getItem(SUBMISSIONS_KEY) ?? "[]") as unknown;
+      if (Array.isArray(storedSubmissions)) {
+        submissionReceiptsRef.current = storedSubmissions.filter(
+          (item): item is SubmissionReceipt =>
+            Boolean(item) &&
+            typeof item === "object" &&
+            typeof (item as SubmissionReceipt).reference === "string" &&
+            typeof (item as SubmissionReceipt).resetToken === "string",
+        );
+      }
     } catch {
       // A private browser mode can block local storage; the in-memory draft still works.
     }
@@ -367,43 +387,64 @@ export function QuestionnaireApp() {
     } catch {}
   }
 
-  function resetQuestionnaire() {
+  async function resetQuestionnaire() {
     if (!window.confirm(copy.resetConfirm)) return;
 
-    const freshDraft: Draft = {
-      meta: { ...emptyDraft.meta, date: new Date().toISOString().slice(0, 10) },
-      answers: {},
-    };
-
-    if (saveTimerRef.current) {
-      window.clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = null;
-    }
-
-    draftRef.current = freshDraft;
-    setMeta(freshDraft.meta);
-    setRenderDraft(freshDraft);
-    setActiveIndex(0);
-    setVisited(new Set([0]));
-    setMode("questions");
-    setIdentityError(false);
-    setShowIdentity(false);
-    setSubmitError(false);
-    setSubmitting(false);
-    setReference("");
-    setAnsweredCount(nonEmptyCount(freshDraft));
-    setSaveState("saved");
+    setResetting(true);
+    setResetError(false);
 
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(freshDraft));
-      window.localStorage.setItem(SECTION_KEY, "0");
-      window.localStorage.setItem(LANGUAGE_KEY, language);
-      window.localStorage.setItem(VISITED_KEY, JSON.stringify([0]));
-    } catch {
-      // The in-memory questionnaire is still reset if local storage is unavailable.
-    }
+      if (submissionReceiptsRef.current.length > 0) {
+        const response = await fetch("/api/submissions", {
+          method: "DELETE",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ submissions: submissionReceiptsRef.current }),
+        });
+        const result = (await response.json()) as { ok?: boolean };
+        if (!response.ok || !result.ok) throw new Error("Database reset failed");
+      }
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+      const freshDraft: Draft = {
+        meta: { ...emptyDraft.meta, date: new Date().toISOString().slice(0, 10) },
+        answers: {},
+      };
+
+      if (saveTimerRef.current) {
+        window.clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+
+      draftRef.current = freshDraft;
+      submissionReceiptsRef.current = [];
+      setMeta(freshDraft.meta);
+      setRenderDraft(freshDraft);
+      setActiveIndex(0);
+      setVisited(new Set([0]));
+      setMode("questions");
+      setIdentityError(false);
+      setShowIdentity(false);
+      setSubmitError(false);
+      setSubmitting(false);
+      setReference("");
+      setAnsweredCount(nonEmptyCount(freshDraft));
+      setSaveState("saved");
+
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(freshDraft));
+        window.localStorage.setItem(SECTION_KEY, "0");
+        window.localStorage.setItem(LANGUAGE_KEY, language);
+        window.localStorage.setItem(VISITED_KEY, JSON.stringify([0]));
+        window.localStorage.removeItem(SUBMISSIONS_KEY);
+      } catch {
+        // The in-memory questionnaire is still reset if local storage is unavailable.
+      }
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      setResetError(true);
+    } finally {
+      setResetting(false);
+    }
   }
 
   function openReview() {
@@ -467,8 +508,17 @@ export function QuestionnaireApp() {
           source: "client-questionnaire",
         }),
       });
-      const result = (await response.json()) as { ok?: boolean; reference?: string };
-      if (!response.ok || !result.ok || !result.reference) throw new Error("Submission failed");
+      const result = (await response.json()) as { ok?: boolean; reference?: string; resetToken?: string };
+      if (!response.ok || !result.ok || !result.reference || !result.resetToken) throw new Error("Submission failed");
+      submissionReceiptsRef.current = [
+        ...submissionReceiptsRef.current.filter((item) => item.reference !== result.reference),
+        { reference: result.reference, resetToken: result.resetToken },
+      ];
+      try {
+        window.localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(submissionReceiptsRef.current));
+      } catch {
+        // The submission still succeeds if this browser blocks local storage.
+      }
       setReference(result.reference);
       setMode("success");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -512,9 +562,16 @@ export function QuestionnaireApp() {
               <span className="save-dot"><CheckIcon /></span>
               <span>{saveState === "saved" ? copy.draft : "..."}</span>
             </div>
-            <button type="button" className="reset-button" onClick={resetQuestionnaire} aria-label={copy.reset}>
+            <button
+              type="button"
+              className="reset-button"
+              onClick={resetQuestionnaire}
+              aria-label={copy.reset}
+              aria-busy={resetting}
+              disabled={resetting}
+            >
               <ResetIcon />
-              <span>{copy.reset}</span>
+              <span>{resetting ? copy.resetting : copy.reset}</span>
             </button>
             <button type="button" className="language-button" onClick={toggleLanguage}>
               <span className="language-mark">Aa</span>
@@ -523,6 +580,8 @@ export function QuestionnaireApp() {
           </div>
         </div>
       </header>
+
+      {resetError && <div className="reset-error-banner" role="alert">{copy.resetError}</div>}
 
       <div className="mobile-progress">
         <div><strong>{copy.section} {activeIndex + 1}</strong><span>{copy.of} {SECTIONS.length}</span></div>

@@ -13,7 +13,9 @@ PASS — Conditional service follow-up
 PASS — Local draft persistence after reload
 PASS — Reset draft action is available
 PASS — Reset requires explicit confirmation
-PASS — Reset affects only the local draft
+PASS — Reset deletes only submitted records linked to the current browser using a secure token
+PASS — Reset keeps the local draft when the database deletion fails
+PASS — Legacy test submission removed; production table row count is 0
 PASS — Review before submission
 PASS — Invalid respondent details remain on review with a visible error
 PASS — Correction action focuses the exact invalid field

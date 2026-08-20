@@ -7,8 +7,12 @@ CREATE TABLE IF NOT EXISTS questionnaire_submissions (
   answer_count INTEGER NOT NULL DEFAULT 0,
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   user_agent TEXT,
+  reset_token_hash TEXT,
   source TEXT NOT NULL DEFAULT 'web'
 );
+
+ALTER TABLE questionnaire_submissions
+  ADD COLUMN IF NOT EXISTS reset_token_hash TEXT;
 
 CREATE INDEX IF NOT EXISTS questionnaire_submissions_submitted_at_idx
   ON questionnaire_submissions (submitted_at DESC);

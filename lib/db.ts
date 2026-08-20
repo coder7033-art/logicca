@@ -27,8 +27,13 @@ export async function ensureSubmissionTable() {
       answer_count INTEGER NOT NULL DEFAULT 0,
       submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       user_agent TEXT,
+      reset_token_hash TEXT,
       source TEXT NOT NULL DEFAULT 'web'
     )
+  `;
+  await sql`
+    ALTER TABLE questionnaire_submissions
+    ADD COLUMN IF NOT EXISTS reset_token_hash TEXT
   `;
   await sql`
     CREATE INDEX IF NOT EXISTS questionnaire_submissions_submitted_at_idx
