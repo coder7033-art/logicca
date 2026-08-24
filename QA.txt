@@ -22,6 +22,9 @@ PASS — Invalid respondent details remain on review with a visible error
 PASS — Correction action focuses the exact invalid field
 PASS — CSV download and print / PDF actions
 PASS — Neon server-only API route
+PASS — Admin dashboard is not linked from the client questionnaire
+PASS — Admin routes and data queries require a signed authenticated session
+PASS — Admin dashboard search, pagination, summaries, and response detail view
 PASS — Live Neon connection and schema initialization
 PASS — Database verification inserted 0 test rows
 PASS — Missing DATABASE_URL returns a safe 503 response

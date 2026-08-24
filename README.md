@@ -24,9 +24,14 @@ npm run dev
 1. ارفع المشروع إلى GitHub أو استورده مباشرة في Vercel.
 2. اترك Framework Preset على `Next.js`.
 3. أضف `DATABASE_URL` في **Project Settings → Environment Variables** لبيئات Production وPreview وDevelopment حسب الحاجة.
-4. نفّذ النشر. أمر البناء هو `npm run build`.
+4. أضف `ADMIN_USERNAME` و`ADMIN_PASSWORD` و`ADMIN_SESSION_SECRET` لحماية لوحة الإدارة.
+5. نفّذ النشر. أمر البناء هو `npm run build`.
 
 لا تضع رابط قاعدة البيانات الحقيقي في الملفات العامة أو في متغير يبدأ بـ `NEXT_PUBLIC_`.
+
+## لوحة الإدارة
+
+لوحة متابعة الردود متاحة على `/admin` ولا يظهر لها أي رابط داخل استبيان العميل. كل صفحاتها واستعلاماتها محمية بجلسة موقعة عبر Cookie آمنة و`HttpOnly`. تعرض اللوحة ملخص الردود والبحث والتصفح وصفحة تفاصيل لكل استبيان.
 
 ## الأوامر
 
